@@ -213,17 +213,17 @@ function print_annual_expense_breakdown()
 		$dec = 1;
 		$thousands = 1000;
 		$amts_thousands = _("Amounts in thousands");
-		$fontSize = 9;
+		$fontSize = ($orientation == 'P' ? 8 : 9);
 	}
 	else
 	{
 		$dec = 2;
 		$thousands = 1;
 		$amts_thousands = "";
-		$fontSize = ($orientation == 'P' ? 7 : 8);
+		$fontSize = ($orientation == 'P' ? 6 : 8);
 	}
-	$cols = array(0, 34, 130, 163, 196, 229, 262, 295, 328, 361, 394, 427, 460, 493, 526, 561);
-	//------------0--1---2----3----4----5----6----7----8----10---11---12---13---14---15---16-
+   	$margins = array('top' => 30, 'bottom' => 34, 'left' => 18, 'right' => 18);
+   	$excelColWidthFactor = 5;
 
 	// from now
 	$sql = "SELECT begin, end, YEAR(end) AS yr, MONTH(end) AS mo FROM ".TB_PREF."fiscal_year WHERE id=".db_escape($year);
@@ -289,16 +289,15 @@ function print_annual_expense_breakdown()
     }
 
 	$rep = new FrontReport(_('Annual Expense Breakdown'), "AnnualBreakDown", user_pagesize(), $fontSize,
-										$orientation);
-    if ($orientation == 'L')
-    	recalculate_cols($cols);
- 	if (user_pagesize() == 'A4')
- 	{
- 		// Portrait, so adjust columns for A4, 30 pts narrower than Letter
- 		for ($i = 2; $i < sizeof($cols); $i++)
- 			$cols[$i] -= 30;
- 	}
-
+										$orientation, $margins, $excelColWidthFactor);
+	
+	//$cols = array(0, 34, 130, 163, 196, 229, 262, 295, 328, 361, 394, 427, 460, 493, 526, 561);
+	//------------0--1---2----3----4----5----6----7----8----10---11---12---13---14---15---16-
+	$cols = array(0=>0, 34, 128);
+   	$endline = $rep->endLine - $margins["left"] - 2;
+	$wi = ($endline - $cols[2]) / 13; // 13 amount columns
+	for ($i = 3; $i < 17; $i++)
+		$cols[$i] = $cols[$i-1] + $wi;
 	$rep->Font();
 	$rep->Info($params, $cols, $headers, $aligns);
 	$rep->NewPage();
